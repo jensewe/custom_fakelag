@@ -8,19 +8,19 @@ jobs:
       matrix:
         include:
         - os: ubuntu-latest
-          sourcemod_version: 1.11-dev
+          sourcemod_version: 1.10-dev
           sdk: l4d2
           cc: clang
           cxx: clang++
 
         - os: ubuntu-18.04
-          sourcemod_version: 1.11-dev
+          sourcemod_version: 1.10-dev
           sdk: l4d2
           cc: clang-8
           cxx: clang++-8
 
         - os: windows-latest
-          sourcemod_version: 1.11-dev
+          sourcemod_version: 1.10-dev
           sdk: l4d2
           cc: ""
           cxx: ""
