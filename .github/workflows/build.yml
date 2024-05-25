@@ -106,5 +106,5 @@ jobs:
       - name: upload extension artifact
         uses: actions/upload-artifact@master
         with:
-          name: ${{ runner.os }}_${{ github.sha }}
+          name: ${{ matrix.os }}_${{ github.sha }}
           path: src/build/package/
