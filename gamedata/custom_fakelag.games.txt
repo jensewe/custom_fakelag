@@ -22,6 +22,15 @@
 				/* 55 8B EC 51 57 8B 7D ? 8B 4F ? */
 			}
 
+			// Search string "Can't delay send a packet larger than maxroutable size %d/%d"
+			"NET_SendPacket"
+			{
+				"library" "engine"
+				"linux"   "@_Z14NET_SendPacketP11INetChanneliRK8netadr_sPKhiP8bf_writebj"
+				"windows" "\x55\x8B\xEC\xB8\x64\x20\x00\x00"
+				/* 55 8B EC B8 64 20 00 00 */
+			}
+
 			"net_time"
 			{
 				"library" "engine"
