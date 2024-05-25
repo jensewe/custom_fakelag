@@ -23,7 +23,7 @@ DETOUR_DECL_STATIC2(NET_LagPacket, bool, bool, newdata, _netpacket_t*, packet)
 	// Returning true means we assert that "packet" is full of a consumable network packet.
 	// Returning false means the consumer should ignore packet, there is no packet to consume yet.
 	if (newdata) {
-		const float lagTime = getLagPacketMs(&packet->from);
+		const float lagTime = getLagPacketMs(packet->from);
 		if (lagTime > 0.0) {
 			// g_pSM->LogError(myself, "Lagging packet on socket %d for %fms", packet->source, lagTime);
 			s_LagSystem->LagPacket(packet, lagTime);
