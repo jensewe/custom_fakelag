@@ -1,6 +1,14 @@
 #ifndef _CUSTOM_FAKELAG_NET_STRUCTURES_H_
 #define _CUSTOM_FAKELAG_NET_STRUCTURES_H_
 #include <netadr.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+
+#undef SOCKET
+typedef int SOCKET;
+
+class INetChannel;
+class CNetChan;
 
 typedef struct dumb_netadr_s {
   netadrtype_t	type;

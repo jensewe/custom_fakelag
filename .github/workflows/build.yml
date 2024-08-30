@@ -28,7 +28,7 @@ jobs:
       - name: download ${{ matrix.sdk }} sdk
         uses: actions/checkout@v2
         with:
-          repository: alliedmodders/hl2sdk
+          repository: jensewe/hl2sdk
           ref: ${{ matrix.sdk }}
           path: hl2sdk-${{ matrix.sdk }}
         

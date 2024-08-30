@@ -38,6 +38,7 @@
  */
 
 #include <mathlib.h>
+#include <memory>
 #include "smsdk_ext.h"
 #include "CDetour/detours.h"
 #include "PlayerLagManager.h"
@@ -84,13 +85,41 @@ public:
 	//virtual void SDK_OnPauseChange(bool paused);
 
 	/**
-	 * @brief this is called when Core wants to know if your extension is working.
+	 * @brief Asks the extension whether it's safe to remove an external
+	 * interface it's using.  If it's not safe, return false, and the
+	 * extension will be unloaded afterwards.
 	 *
-	 * @param error		Error message buffer.
-	 * @param maxlen	Size of error message buffer.
-	 * @return			True if working, false otherwise.
+	 * NOTE: It is important to also hook NotifyInterfaceDrop() in order to clean
+	 * up resources.
+	 *
+	 * @param pInterface		Pointer to interface being dropped.  This
+	 * 							pointer may be opaque, and it should not
+	 *							be queried using SMInterface functions unless
+	 *							it can be verified to match an existing
+	 *							pointer of known type.
+	 * @return					True to continue, false to unload this
+	 * 							extension afterwards.
 	 */
-	//virtual bool QueryRunning(char *error, size_t maxlen);
+	bool QueryInterfaceDrop(SMInterface* pInterface) override;
+
+	/**
+	 * @brief Notifies the extension that an external interface it uses is being removed.
+	 *
+	 * @param pInterface		Pointer to interface being dropped.  This
+	 * 							pointer may be opaque, and it should not
+	 *							be queried using SMInterface functions unless
+	 *							it can be verified to match an existing
+	 */
+	void NotifyInterfaceDrop(SMInterface* pInterface) override;
+
+	/**
+	 * @brief Return false to tell Core that your extension should be considered unusable.
+	 *
+	 * @param error				Error buffer.
+	 * @param maxlength			Size of error buffer.
+	 * @return					True on success, false otherwise.
+	 */
+	bool QueryRunning(char* error, size_t maxlength) override;
 public:
 #if defined SMEXT_CONF_METAMOD
 	/**

@@ -40,8 +40,8 @@
 /* Basic information exposed publicly */
 #define SMEXT_CONF_NAME			"Custom Fakelag"
 #define SMEXT_CONF_DESCRIPTION	"Customize Fakelag implementation"
-#define SMEXT_CONF_VERSION		"1.0.0.0"
-#define SMEXT_CONF_AUTHOR		"ProdigySim"
+#define SMEXT_CONF_VERSION		"1.1.0.0"
+#define SMEXT_CONF_AUTHOR		"ProdigySim, Forgetest"
 #define SMEXT_CONF_URL			"http://www.github.com/ProdigySim/custom_fakelag"
 #define SMEXT_CONF_LOGTAG		"CUSTOM_FAKELAG"
 #define SMEXT_CONF_LICENSE		"GPL"
