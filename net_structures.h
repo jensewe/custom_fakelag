@@ -3,15 +3,18 @@
 #include <netadr.h>
 
 #if defined(_WIN32)
+
 #include <winsock2.h>
 typedef int socklen_t;
+
 #elif defined POSIX
+
 #include <sys/socket.h>
 #include <netinet/in.h>
-#endif 
-
 #undef SOCKET
 typedef int SOCKET;
+
+#endif 
 
 class INetChannel;
 class CNetChan;
