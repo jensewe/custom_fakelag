@@ -9,13 +9,13 @@ jobs:
         include:
         - os: ubuntu-latest
           sourcemod_version: 1.10-dev
-          sdk: l4d2
+          sdk: l4d2-fork
           cc: clang
           cxx: clang++
 
         - os: windows-latest
           sourcemod_version: 1.10-dev
-          sdk: l4d2
+          sdk: l4d2-fork
           cc: ""
           cxx: ""
     runs-on: ${{ matrix.os }}
