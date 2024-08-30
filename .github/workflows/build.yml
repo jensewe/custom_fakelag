@@ -9,13 +9,15 @@ jobs:
         include:
         - os: ubuntu-latest
           sourcemod_version: 1.10-dev
-          sdk: l4d2-fork
+          branch: l4d2-fork
+          sdk: l4d2
           cc: clang
           cxx: clang++
 
         - os: windows-latest
           sourcemod_version: 1.10-dev
-          sdk: l4d2-fork
+          branch: l4d2-fork
+          sdk: l4d2
           cc: ""
           cxx: ""
     runs-on: ${{ matrix.os }}
@@ -29,7 +31,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           repository: jensewe/hl2sdk
-          ref: ${{ matrix.sdk }}
+          ref: ${{ matrix.branch }}
           path: hl2sdk-${{ matrix.sdk }}
         
       - name: download sourcemod
