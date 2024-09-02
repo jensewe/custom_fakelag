@@ -12,6 +12,7 @@
 
 // Used to match against certain debug values of cvars.
 #define NET_QUEUED_PACKET_THREAD_DEBUG_VALUE 581304 
+#define NET_QUEUED_PACKET_THREAD_SEND_PACKET 0xFEEDBEEF
 
 class INetChannel;
 

@@ -236,7 +236,7 @@ int CQueuedPacketSender::Run()
 					pPacket->buf.Count(), 
 					(sockaddr*)pPacket->to.Base(),
 					pPacket->to.Count(), 
-					-1 
+					NET_QUEUED_PACKET_THREAD_SEND_PACKET 
 				);
 			}	
 			
