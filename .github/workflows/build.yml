@@ -9,7 +9,7 @@ jobs:
       matrix:
         include:
         - os: ubuntu-22.04
-          os_short: old_linux
+          os_short: oldlinux
           sourcemod_version: 1.10-dev
           branch: l4d2-fork
           sdk: l4d2
@@ -113,5 +113,5 @@ jobs:
       - name: upload extension artifact
         uses: actions/upload-artifact@master
         with:
-          name: ${{ matrix.os_short }}_${{ github.sha }}
+          name: custom_fakelag_${{ matrix.os_short }}_${{ github.sha }}
           path: src/build/package/
