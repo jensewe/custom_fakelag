@@ -22,39 +22,21 @@
 				/* 55 8B EC 51 57 8B 7D ? 8B 4F ? */
 			}
 
-			// Search string "Can't delay send a packet larger than maxroutable size %d/%d"
-			"NET_SendPacket"
-			{
-				"library" "engine"
-				"linux"   "@_Z14NET_SendPacketP11INetChanneliRK8netadr_sPKhiP8bf_writebj"
-				"windows" "\x55\x8B\xEC\xB8\x64\x20\x00\x00"
-				/* 55 8B EC B8 64 20 00 00 */
-			}
-
-			// Search string "senddata"
-			"NET_SendTo"
-			{
-				"library" "engine"
-				"linux"   "@_ZL10NET_SendTobiPKciPK8sockaddrii.isra.16"
-			}
-
 			// Search string "XVoice: VDP packet to %d with unencrypted %d bytes out of %d bytes"
 			"NET_SendToImpl"
 			{
 				"library" "engine"
 				"linux"   "@_Z14NET_SendToImpliPKciPK8sockaddrii"
-			}
-
-			"NET_QueuePacketForSend"
-			{
-				"library" "engine"
-				"linux"   "@_ZL22NET_QueuePacketForSendP8CNetChanbiPKciPK8sockaddrij.isra.90.constprop.104"
+				"windows" "\x55\x8B\xEC\x83\xEC\x18\x80\x3D\x2A\x2A\x2A\x2A\x00\xC7\x45\xF8\x00\x00\x00\x00"
+				/* 55 8B EC 83 EC 18 80 3D ? ? ? ? 00 C7 45 F8 00 00 00 00 */
 			}
 
 			"NET_ClearQueuedPacketsForChannel"
 			{
 				"library" "engine"
 				"linux"   "@_Z32NET_ClearQueuedPacketsForChannelP11INetChannel"
+				"windows" "\x55\x8B\xEC\x51\x66\xA1"
+				/* 55 8B EC 51 66 A1 */
 			}
 
 			"net_time"
