@@ -31,11 +31,14 @@
 
 #include "extension.h"
 #include "NET_LagPacket_Detour.h"
+#include "net_ws_queued_packet_sender.h"
 #include "LagSystem.h"
+#include "wrappers.h"
 
 CustomFakelag g_Sample;		/**< Global singleton for extension's main interface */
 extern sp_nativeinfo_t g_CFakeLagNatives[];
 IGameConfig* g_pGameConf = NULL;
+IBinTools* bintools = NULL;
 
 bool CustomFakelag::SDK_OnLoad(char* error, size_t maxlen, bool late) 
 {
@@ -69,7 +72,14 @@ bool CustomFakelag::SDK_OnLoad(char* error, size_t maxlen, bool late)
 		return false;
 	}
 
-	
+	if (!g_pGameConf->GetMemSig("NET_SendToImpl", &g_pNET_SendToImpl)) {
+		ke::SafeSprintf(error, maxlen, "Could not get NET_SendToImpl address.");
+		return false;
+	}
+
+	g_pLagPackedSender->Setup();
+
+	sharesys->AddDependency(myself, "bintools.ext", true, true);
 	sharesys->AddNatives(myself, g_CFakeLagNatives);
 	sharesys->RegisterLibrary(myself, "custom_fakelag");
 	return true;
@@ -77,15 +87,53 @@ bool CustomFakelag::SDK_OnLoad(char* error, size_t maxlen, bool late)
 
 void CustomFakelag::SDK_OnAllLoaded()
 {
+	SM_GET_LATE_IFACE(BINTOOLS, bintools);
+
+	if (bintools)
+	{
+		SourceMod::PassInfo params[] = {
+			{ PassType_Basic, PASSFLAG_BYVAL, sizeof(int), NULL, 0 },
+			{ PassType_Basic, PASSFLAG_BYVAL, sizeof(char*), NULL, 0 },
+			{ PassType_Basic, PASSFLAG_BYVAL, sizeof(int), NULL, 0 },
+			{ PassType_Basic, PASSFLAG_BYVAL, sizeof(sockaddr*), NULL, 0 },
+			{ PassType_Basic, PASSFLAG_BYVAL, sizeof(int), NULL, 0 },
+			{ PassType_Basic, PASSFLAG_BYVAL, sizeof(int), NULL, 0 },
+		};
+
+		// int NET_SendToImpl( SOCKET s, const char * buf, int len, const struct sockaddr * to, int tolen, int iGameDataLength )
+		g_callNET_SendToImpl = bintools->CreateCall(g_pNET_SendToImpl, CallConv_Cdecl, &params[0], params, 6);
+		if (g_callNET_SendToImpl == NULL) {
+			smutils->LogError(myself, "Unable to create ICallWrapper for \"g_callNET_SendToImpl\"!");
+			return;
+		}
+	}
 }
 
 void CustomFakelag::SDK_OnUnload() {
+	g_pLagPackedSender->Shutdown();
 	LagDetour_Shutdown();
 	if (m_LagManager)
 	{
 		delete m_LagManager;
 	}
 	m_LagManager = NULL;
+}
+
+bool CustomFakelag::QueryInterfaceDrop(SMInterface* pInterface)
+{
+	return pInterface != bintools;
+}
+
+void CustomFakelag::NotifyInterfaceDrop(SMInterface* pInterface)
+{
+	SDK_OnUnload();
+}
+
+bool CustomFakelag::QueryRunning(char* error, size_t maxlength)
+{
+	SM_CHECK_IFACE(BINTOOLS, bintools);
+
+	return true;
 }
 
 

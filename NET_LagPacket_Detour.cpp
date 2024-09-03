@@ -1,11 +1,13 @@
 #include "extension.h"
 #include "NET_LagPacket_Detour.h"
+#include "net_ws_queued_packet_sender.h"
 #include "PlayerLagManager.h"
 #include "LagSystem.h"
 
 // IForward* g_fwdLagPacket = NULL;
 CDetour* DLagPacket = NULL;
-CDetour* DSendPacket = NULL;
+CDetour* DSendToImpl = NULL;
+CDetour* DClearQueuedPacketsForChannel = NULL;
 
 static const PlayerLagManager* s_LagManager;
 static LagSystem* s_LagSystem;
@@ -25,8 +27,8 @@ DETOUR_DECL_STATIC2(NET_LagPacket, bool, bool, newdata, _netpacket_t*, packet)
 	if (newdata) {
 		const float lagTime = getLagPacketMs(packet->from);
 		if (lagTime > 0.0) {
-			// g_pSM->LogError(myself, "Lagging packet on socket %d for %fms", packet->source, lagTime);
-			s_LagSystem->LagPacket(packet, lagTime);
+			// g_pSM->LogError(myself, "Lagging packet on socket %d for %fms", packet->source, lagTime / 2.0);
+			s_LagSystem->LagPacket(packet, lagTime / 2.0);
 		}
 		else
 		{
@@ -38,15 +40,34 @@ DETOUR_DECL_STATIC2(NET_LagPacket, bool, bool, newdata, _netpacket_t*, packet)
 	return s_LagSystem->GetNextPacket(packet->source, packet);
 }
 
-DETOUR_DECL_STATIC8(NET_SendPacket, int, INetChannel *, chan, int, sock,  const dumb_netadr_s &, to, const unsigned char *, data, int, length, bf_write *, pVoicePayload /* = NULL */, bool, bUseCompression /*=false*/, uint32, unMillisecondsDelay /*=0u*/)
+void SockAddrToNetAdr(const struct sockaddr *s, dumb_netadr_s *a);
+
+DETOUR_DECL_STATIC6(DTR_NET_SendToImpl, int, SOCKET, s, const char *, buf, int, len, const struct sockaddr *, to, int, tolen, int, iGameDataLength)
 {
-	const float lagTime = getLagPacketMs(to);
-	if (lagTime > 0.0) {
-		// g_pSM->LogError(myself, "Lagging packet on socket %d for %fms", sock, lagTime);
-		unMillisecondsDelay += (uint32)lagTime;
-		return NET_SendPacket_Actual(chan, sock, to, data, length, pVoicePayload, bUseCompression, unMillisecondsDelay);
+	if (g_pLagPackedSender->IsRunning() && iGameDataLength != NET_QUEUED_PACKET_THREAD_SEND_PACKET)
+	{
+		dumb_netadr_s adr;
+		SockAddrToNetAdr(to, &adr);
+
+		const float lagTime = getLagPacketMs(adr);
+		if (lagTime > 0.0)
+		{
+			// Warning( "DTR_NET_SendToImpl: Lagging packet on socket %d for %fms (%d bytes)\n", soc, lagTime, len);
+			g_pLagPackedSender->QueuePacket(NULL, s, buf, len, to, tolen, (uint32)(lagTime / 2.0));
+			return len;
+		}
 	}
-	return NET_SendPacket_Actual(chan, sock, to, data, length, pVoicePayload, bUseCompression, unMillisecondsDelay);
+
+	if (iGameDataLength == NET_QUEUED_PACKET_THREAD_SEND_PACKET)
+		iGameDataLength = -1;
+
+	return DTR_NET_SendToImpl_Actual(s, buf, len, to, tolen, iGameDataLength);
+}
+
+DETOUR_DECL_STATIC1(NET_ClearQueuedPacketsForChannel, void, INetChannel *, chan)
+{
+	g_pLagPackedSender->ClearQueuedPacketsForChannel(chan);
+	return NET_ClearQueuedPacketsForChannel_Actual(chan);
 }
 
 bool CreateNetLagPacketDetour()
@@ -59,13 +80,21 @@ bool CreateNetLagPacketDetour()
 	}
 	DLagPacket->EnableDetour();
 
-	DSendPacket = DETOUR_CREATE_STATIC(NET_SendPacket, "NET_SendPacket");
-	if (DSendPacket == NULL)
+	DSendToImpl = DETOUR_CREATE_STATIC(DTR_NET_SendToImpl, "NET_SendToImpl");
+	if (DSendToImpl == NULL)
 	{
-		g_pSM->LogError(myself, "NET_SendPacket detour could not be initialized - FeelsBadMan.");
+		g_pSM->LogError(myself, "NET_SendToImpl detour could not be initialized - FeelsBadMan.");
 		return false;
 	}
-	DSendPacket->EnableDetour();
+	DSendToImpl->EnableDetour();
+
+	DClearQueuedPacketsForChannel = DETOUR_CREATE_STATIC(NET_ClearQueuedPacketsForChannel, "NET_ClearQueuedPacketsForChannel");
+	if (DClearQueuedPacketsForChannel == NULL)
+	{
+		g_pSM->LogError(myself, "NET_ClearQueuedPacketsForChannel detour could not be initialized - FeelsBadMan.");
+		return false;
+	}
+	DClearQueuedPacketsForChannel->EnableDetour();
 
 	return true;
 }
@@ -101,3 +130,14 @@ void LagDetour_Shutdown() {
 	}
 	s_LagManager = NULL;
 }
+
+void SockAddrToNetAdr( const struct sockaddr *s, dumb_netadr_s *a )
+{
+	if (s->sa_family == AF_INET)
+	{
+		a->type = NA_IP;
+		*(int *)&a->ip = ((struct sockaddr_in *)s)->sin_addr.s_addr;
+		a->port = ((struct sockaddr_in *)s)->sin_port;
+	}
+}
+

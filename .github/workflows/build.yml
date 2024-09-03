@@ -5,10 +5,21 @@ on: [push, pull_request, workflow_dispatch]
 jobs:
   build:
     strategy:
+      fail-fast: false
       matrix:
         include:
-        - os: ubuntu-latest
+        - os: ubuntu-22.04
+          os_short: oldlinux
           sourcemod_version: 1.10-dev
+          branch: l4d2-fork
+          sdk: l4d2
+          cc: clang
+          cxx: clang++
+
+        - os: ubuntu-latest
+          os_short: linux
+          sourcemod_version: 1.10-dev
+          branch: l4d2-fork
           sdk: l4d2
           cc: clang
           cxx: clang++
@@ -20,7 +31,9 @@ jobs:
           cxx: clang++-8
 
         - os: windows-latest
+          os_short: windows
           sourcemod_version: 1.10-dev
+          branch: l4d2-fork
           sdk: l4d2
           cc: ""
           cxx: ""
@@ -34,8 +47,8 @@ jobs:
       - name: download ${{ matrix.sdk }} sdk
         uses: actions/checkout@v2
         with:
-          repository: alliedmodders/hl2sdk
-          ref: ${{ matrix.sdk }}
+          repository: jensewe/hl2sdk
+          ref: ${{ matrix.branch }}
           path: hl2sdk-${{ matrix.sdk }}
         
       - name: download sourcemod
@@ -106,5 +119,5 @@ jobs:
       - name: upload extension artifact
         uses: actions/upload-artifact@master
         with:
-          name: ${{ matrix.os }}_${{ github.sha }}
+          name: custom_fakelag_${{ matrix.os_short }}_${{ github.sha }}
           path: src/build/package/
