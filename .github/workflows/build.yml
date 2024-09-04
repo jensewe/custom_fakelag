@@ -33,6 +33,11 @@ jobs:
           cxx: ""
     runs-on: ${{ matrix.os }}
     steps:
+      - name: Prepare env
+        shell: bash
+        run: |
+          echo "GITHUB_SHA_SHORT=${GITHUB_SHA::7}" >> $GITHUB_ENV
+          
       - name: checkout repo
         uses: actions/checkout@v2
         with:
@@ -113,5 +118,36 @@ jobs:
       - name: upload extension artifact
         uses: actions/upload-artifact@master
         with:
-          name: custom_fakelag_${{ matrix.os_short }}_${{ github.sha }}
+          name: custom_fakelag_${{ matrix.os_short }}_${{ env.GITHUB_SHA_SHORT }}
           path: src/build/package/
+
+  release:
+    name: Release
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+
+      - name: Package
+        run: |
+          version=`echo $GITHUB_REF | sed "s/refs\/tags\///"`
+          ls -Rall
+          for folder in ${{ github.event.repository.name }}*; do
+            if [ -d "$folder" ]; then
+              echo "Processing folder: $folder"
+              cd $folder
+              tar -czf ../$folder.tar.gz -T <(\ls -1)
+              cd ..
+            fi
+          done
+
+      - name: Release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: '*.tar.gz'
+          tag: ${{ github.ref }}
+          file_glob: true
