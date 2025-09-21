@@ -11,15 +11,27 @@ sourceFiles = [
   "net_ws_queued_packet_sender.cpp",
   'LagSystem.cpp',
   'PlayerLagManager.cpp',
-  'CDetour/detours.cpp',
-  'asm/asm.c',
-] + list(map(lambda x : 'libudis86/' + x, ['decode.c', 'itab.c', 'syn-att.c', 'syn-intel.c', 'syn.c', 'udis86.c']))
+#   'CDetour/detours.cpp',
+#   'asm/asm.c',
+# ] + list(map(lambda x : 'libudis86/' + x, ['decode.c', 'itab.c', 'syn-att.c', 'syn-intel.c', 'syn.c', 'udis86.c']))
+]
+
+# SM 1.10+ compilation changes
+if os.path.isfile(os.path.join(Extension.sm_root, 'public', 'libudis86', 'decode.c')):
+  sourceFiles += [
+    os.path.join(Extension.sm_root, 'public', 'libudis86', 'decode.c'),
+    os.path.join(Extension.sm_root, 'public', 'libudis86', 'itab.c'),
+    os.path.join(Extension.sm_root, 'public', 'libudis86', 'syn-att.c'),
+    os.path.join(Extension.sm_root, 'public', 'libudis86', 'syn-intel.c'),
+    os.path.join(Extension.sm_root, 'public', 'libudis86', 'syn.c'),
+    os.path.join(Extension.sm_root, 'public', 'libudis86', 'udis86.c')
+  ]
 
 ###############
 # Make sure to edit PackageScript, which copies your files to their appropriate locations
 # Simple extensions do not need to modify past this point.
 
-project = Extension.HL2Project(builder, projectName + '.ext')
+project = builder.LibraryProject(projectName + '.ext')
 
 if os.path.isfile(os.path.join(builder.currentSourcePath, 'sdk', 'smsdk_ext.cpp')):
   # Use the copy included in the project
@@ -30,9 +42,19 @@ else:
 
 project.sources += sourceFiles
   
-for sdk_name in Extension.sdks:
+for sdk_name in ['css', 'tf2', 'dods', 'hl2dm', 'csgo', 'l4d', 'l4d2']:
+  if sdk_name not in Extension.sdks:
+    continue
   sdk = Extension.sdks[sdk_name]
+
+  for cxx in Extension.all_targets:
+    if not cxx.target.arch in sdk.platformSpec[cxx.target.platform]:
+      continue
   
-  binary = Extension.HL2Config(project, projectName + '.ext.' + sdk.ext, sdk)
+    binary = Extension.HL2Config(project, cxx, projectName + '.ext.' + sdk.ext, sdk, builder)
+    Extension.AddCDetour(binary)
+    compiler = binary.compiler
+    compiler.defines += ['HAVE_STRING_H'];
+    
 
 Extension.extensions = builder.Add(project)

@@ -39,3 +39,6 @@ Debug/
 build/
 pkg/
 /msvc12
+
+# Submodule dir
+# safetyhook/
